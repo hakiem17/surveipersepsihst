@@ -15,9 +15,9 @@ const supabaseAdmin = createClient(
 );
 
 // UPDATE Demografis Data (data_responden)
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
 
     const { searchParams } = new URL(request.url);
@@ -64,9 +64,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 // DELETE Data Survey (data_sesi_survei)
 // Since there's an ON DELETE CASCADE set up usually, deleting sesi survei removes answers too.
 // If the ID passed is the sesi_survei id, it deletes the session.
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id; // This is the ID of data_sesi_survei
+    const { id } = await context.params;
     if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
 
     const { error } = await supabaseAdmin

@@ -158,6 +158,7 @@ export default function DataRespondenPage() {
           kecamatan_id: desa?.kecamatan_id,
           desa_nama: desa?.nama_desa,
           kecamatan_nama: kecamatan?.nama_kecamatan,
+          skor_makro: row.skor_makro,
           skor_total: skorPersen,
           skor_rata: rataRata,
           is_valid: row.is_valid !== false,
