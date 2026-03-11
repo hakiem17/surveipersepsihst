@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(
 );
 
 // UPDATE Demografis Data (data_responden)
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
     if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
@@ -64,7 +64,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 // DELETE Data Survey (data_sesi_survei)
 // Since there's an ON DELETE CASCADE set up usually, deleting sesi survei removes answers too.
 // If the ID passed is the sesi_survei id, it deletes the session.
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
     if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
