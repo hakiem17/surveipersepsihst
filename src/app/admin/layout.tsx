@@ -43,7 +43,16 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans relative">
+      {/* Animated Mesh Gradients */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 dark:bg-blue-900/20 blur-[120px] mix-blend-multiply dark:mix-blend-lighten animate-pulse duration-[10000ms]" />
+         <div className="absolute top-[20%] -right-[10%] w-[45%] h-[55%] rounded-full bg-indigo-400/20 dark:bg-indigo-900/20 blur-[120px] mix-blend-multiply dark:mix-blend-lighten animate-pulse duration-[8000ms] delay-700" />
+         <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] rounded-full bg-purple-400/20 dark:bg-emerald-900/10 blur-[120px] mix-blend-multiply dark:mix-blend-lighten animate-pulse duration-[12000ms] delay-1000" />
+      </div>
+
+      {/* Main UI Wrapper (z-10 to stay above mesh) */}
+      <div className="relative z-10 flex w-full flex-col min-h-screen">
       <AdminSidebar 
         collapsed={sidebarCollapsed} 
         setCollapsed={setSidebarCollapsed} 
@@ -60,11 +69,12 @@ export default function AdminLayout({
         <AdminHeader onMenuClick={() => setMobileMenuOpen(true)} />
         
         {/* Area Scrollable untuk Konten Panel Utama */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto h-full">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto h-full relative z-10">
              {children}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );

@@ -26,7 +26,7 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick?: () => void 
   };
 
   return (
-    <header className="h-16 w-full flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
+    <header className="h-16 w-full flex items-center justify-between px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 shrink-0 sticky top-0 z-40">
       
       {/* Left side: Breadcrumb placeholder or Title */}
       <div className="flex items-center gap-3">

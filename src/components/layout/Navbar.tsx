@@ -8,14 +8,57 @@ import { motion, AnimatePresence } from "framer-motion";
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("beranda");
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    // Intersection Observer for highlighting active section
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Beranda is handled if scroll is at top
+            if (window.scrollY < 300) {
+               setActiveSection("beranda");
+            } else {
+               setActiveSection(entry.target.id);
+            }
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    const sections = document.querySelectorAll("section[id]");
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      sections.forEach((section) => observer.unobserve(section));
+    };
   }, []);
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    
+    if (sectionId === "beranda") {
+       window.scrollTo({ top: 0, behavior: "smooth" });
+       setActiveSection("beranda");
+       return;
+    }
+
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -80; // offset for fixed navbar
+      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
 
   return (
     <>
@@ -43,9 +86,27 @@ export function Navbar() {
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-slate-600 dark:text-slate-300">
-              <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Beranda</Link>
-              <Link href="#tentang" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Tentang</Link>
-              <Link href="#statistik" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Statistik</Link>
+              <a 
+                href="#" 
+                onClick={(e) => scrollToSection(e, "beranda")}
+                className={`transition-colors relative py-2 ${activeSection === "beranda" ? "text-blue-600 dark:text-blue-400 font-semibold" : "hover:text-blue-600 dark:hover:text-blue-400"}`}
+              >
+                Beranda
+              </a>
+              <a 
+                href="#tentang" 
+                onClick={(e) => scrollToSection(e, "tentang")}
+                className={`transition-colors relative py-2 ${activeSection === "tentang" ? "text-blue-600 dark:text-blue-400 font-semibold" : "hover:text-blue-600 dark:hover:text-blue-400"}`}
+              >
+                Tentang
+              </a>
+              <a 
+                href="#statistik" 
+                onClick={(e) => scrollToSection(e, "statistik")}
+                className={`transition-colors relative py-2 ${activeSection === "statistik" ? "text-blue-600 dark:text-blue-400 font-semibold" : "hover:text-blue-600 dark:hover:text-blue-400"}`}
+              >
+                Statistik
+              </a>
             </nav>
 
             <div className="hidden md:block">
@@ -103,27 +164,27 @@ export function Navbar() {
               </div>
 
               <nav className="flex flex-col gap-4 flex-1">
-                <Link
-                  href="/"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors"
+                <a
+                  href="#"
+                  onClick={(e) => scrollToSection(e, "beranda")}
+                  className={`px-4 py-3 rounded-xl font-medium transition-colors ${activeSection === "beranda" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                 >
                   Beranda
-                </Link>
-                <Link
+                </a>
+                <a
                   href="#tentang"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors"
+                  onClick={(e) => scrollToSection(e, "tentang")}
+                  className={`px-4 py-3 rounded-xl font-medium transition-colors ${activeSection === "tentang" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                 >
                   Tentang Survei
-                </Link>
-                <Link
+                </a>
+                <a
                   href="#statistik"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors"
+                  onClick={(e) => scrollToSection(e, "statistik")}
+                  className={`px-4 py-3 rounded-xl font-medium transition-colors ${activeSection === "statistik" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                 >
                   Statistik & Hasil
-                </Link>
+                </a>
               </nav>
 
               <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">

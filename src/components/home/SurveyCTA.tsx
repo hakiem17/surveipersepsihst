@@ -33,7 +33,7 @@ export async function SurveyCTA() {
   const isSurveiAktif = settings.status_survei_aktif;
 
   return (
-    <section className="py-16 md:py-24 relative z-10 container mx-auto px-4 md:px-6">
+    <section id="statistik" className="py-16 md:py-24 relative z-10 container mx-auto px-4 md:px-6">
       <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-900/20">
         {/* Decorative background circles */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />

@@ -64,6 +64,9 @@ export default function SurveiPage() {
   const [saranAspirasi, setSaranAspirasi] = useState("");
   const [skorMakro, setSkorMakro] = useState<number | null>(null);
 
+  // State for Wizard Format
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+
   // Load Global Settings
   const loadSettings = async () => {
     try {
@@ -171,6 +174,36 @@ export default function SurveiPage() {
     return semuaTerjawab && skorMakro !== null;
   };
 
+  // Helper untuk navigasi Wizard
+  const totalSteps = listPertanyaan.length + 1; // +1 untuk Skor Makro
+
+  const isCurrentQuestionValid = () => {
+    if (currentQuestionIndex < listPertanyaan.length) {
+      const p = listPertanyaan[currentQuestionIndex];
+      const ans = jawaban[p.id]?.skor_pilihan;
+      if (!ans) return false;
+      return true; // we don't block submit early here
+    } else {
+      // Makro page
+      if (!skorMakro) return false;
+      return true;
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < totalSteps - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    } else {
+      setCurrentStep("demografi");
+    }
+  };
+
   const handleGatekeeperSelect = (isAsnValue: boolean) => {
     setIsASN(isAsnValue);
 
@@ -195,6 +228,7 @@ export default function SurveiPage() {
   const lanjutKeKuesioner = async () => {
     await loadPertanyaan();
     setCurrentStep("kuesioner");
+    setCurrentQuestionIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -714,164 +748,213 @@ export default function SurveiPage() {
               >
                 <div className="mb-6 border-b border-slate-100 dark:border-slate-800 pb-6">
                   <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
-                    Kuesioner Layanan Publik
+                    Kuesioner Kepuasan Persepsi Publik
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400">
+                  <p className="text-slate-600 dark:text-slate-400 mb-4">
                     Silakan berikan penilaian Anda sesuai dengan pengalaman Anda. Skala 1 (Sangat Buruk/Sangat Sulit) hingga 5 (Sangat Baik/Sangat Mudah).
                   </p>
+
+                  {/* Progress Bar Container */}
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 mb-2 overflow-hidden">
+                    <motion.div 
+                      className="bg-blue-600 h-2.5 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(currentQuestionIndex / totalSteps) * 100}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <span>Langkah {currentQuestionIndex + 1} dari {totalSteps}</span>
+                    <span>{Math.round((currentQuestionIndex / totalSteps) * 100)}%</span>
+                  </div>
                 </div>
 
-                <div className="space-y-10 overflow-y-auto pr-2 pb-6 flex-1">
+                <div className="space-y-10 overflow-y-auto pr-2 pb-6 flex-1 min-h-[400px]">
                   {listPertanyaan.length > 0 ? (
-                    listPertanyaan.map((pert, index) => {
-                      const ans = jawaban[pert.id]?.skor_pilihan;
-                      const butuhCerita = ans === 1 || ans === 2;
-                      const hasAnswered = !!ans; // munculkan text area jika sudah ada jawaban apapun
+                    <AnimatePresence mode="wait">
+                      {currentQuestionIndex < listPertanyaan.length ? (() => {
+                        const pert = listPertanyaan[currentQuestionIndex];
+                        const ans = jawaban[pert.id]?.skor_pilihan;
+                        const butuhCerita = ans === 1 || ans === 2;
+                        const hasAnswered = !!ans; // munculkan text area jika sudah ada jawaban apapun
 
-                      return (
-                        <div key={pert.id} className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
-                          <div className="mb-4">
-                            <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 font-bold mb-3 shadow-sm text-sm">
-                              {index + 1}
+                        return (
+                          <motion.div 
+                            key={`question-${pert.id}`}
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -50 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-2xl border border-slate-200 dark:border-slate-800"
+                          >
+                            <div className="mb-4">
+                              <div className="inline-flex items-center justify-center px-4 h-8 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 font-bold mb-3 shadow-sm text-sm">
+                                Pertanyaan {currentQuestionIndex + 1}
+                              </div>
+                              <h3 className="text-lg md:text-xl font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                                {pert.teks_pertanyaan}
+                              </h3>
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 leading-snug">
-                              {pert.teks_pertanyaan}
-                            </h3>
-                          </div>
 
-                          <div className="grid grid-cols-5 gap-2 md:gap-4 mt-6">
-                            {[1, 2, 3, 4, 5].map(score => (
-                              <button
-                                key={score}
-                                onClick={() => handleJawabanSkor(pert.id, score)}
-                                className={`flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all duration-200
-                                      ${ans === score
-                                    ? (score <= 2 ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 shadow-md shadow-red-100 dark:shadow-none'
-                                      : score === 3 ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 shadow-md'
-                                        : 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-md shadow-emerald-100 dark:shadow-none')
-                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                                  }
-                                   `}
-                              >
-                                <span className="text-2xl font-bold">{score}</span>
-                                <span className="text-[10px] md:text-xs text-center mt-1 hidden sm:block opacity-80">
-                                  {score === 1 && "Sangat Kurang"}
-                                  {score === 2 && "Kurang"}
-                                  {score === 3 && "Cukup"}
-                                  {score === 4 && "Baik"}
-                                  {score === 5 && "Sangat Baik"}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-
-                          <AnimatePresence>
-                            {hasAnswered && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                                className="overflow-hidden"
-                              >
-                                <div className={`p-4 border rounded-xl space-y-2 transition-colors duration-300
-                                   ${butuhCerita
-                                    ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
-                                    : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50'
-                                  }
-                                 `}>
-                                  <label className={`block text-sm font-semibold 
-                                    ${butuhCerita ? 'text-red-800 dark:text-red-300' : 'text-slate-700 dark:text-slate-300'}
-                                  `}>
-                                    {butuhCerita
-                                      ? "Mohon ceritakan kendala yang Bapak/Ibu alami (Wajib terisi)"
-                                      : "Ada alasan atau pesan khusus terkait penilaian ini? (Boleh dikosongkan)"}
-                                  </label>
-                                  <textarea
-                                    required={butuhCerita}
-                                    value={jawaban[pert.id]?.cerita_kendala || ""}
-                                    onChange={(e) => handleJawabanCerita(pert.id, e.target.value)}
-                                    rows={2}
-                                    placeholder={butuhCerita
-                                      ? "Apa yang membuat layanan terasa kurang maksimal? Keluhan Anda berharga bagi kami."
-                                      : "Ketik di sini jika ada tambahan catatan/apresiasi..."
+                            <div className="grid grid-cols-5 gap-2 md:gap-4 mt-8">
+                              {[1, 2, 3, 4, 5].map(score => (
+                                <button
+                                  key={score}
+                                  onClick={() => handleJawabanSkor(pert.id, score)}
+                                  className={`relative flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all duration-300 transform
+                                        ${ans === score
+                                      ? (score <= 2 ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 shadow-lg shadow-red-500/30 -translate-y-1'
+                                        : score === 3 ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 shadow-lg shadow-amber-500/30 -translate-y-1'
+                                          : 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 shadow-lg shadow-emerald-500/30 -translate-y-1')
+                                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:-translate-y-0.5'
                                     }
-                                    className={`w-full px-4 py-2 rounded-lg border bg-white dark:bg-slate-900 focus:ring-2 outline-none transition-all text-sm
-                                      ${butuhCerita
-                                        ? 'border-red-200 dark:border-red-800/50 text-slate-800 dark:text-slate-200 focus:ring-red-500 placeholder:text-slate-400'
-                                        : 'border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 focus:ring-blue-500 placeholder:text-slate-400'
+                                     `}
+                                >
+                                  {/* Glow Haptic behind the button when active */}
+                                  {ans === score && (
+                                     <span className={`absolute inset-0 rounded-xl blur-md opacity-40 -z-10 ${score <= 2 ? 'bg-red-500' : score === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                  )}
+                                  
+                                  <span className="text-3xl font-bold">{score}</span>
+                                  <span className="text-[10px] md:text-xs text-center mt-2 hidden sm:block opacity-80 font-medium">
+                                    {score === 1 && "Sangat Kurang"}
+                                    {score === 2 && "Kurang"}
+                                    {score === 3 && "Cukup"}
+                                    {score === 4 && "Baik"}
+                                    {score === 5 && "Sangat Baik"}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+
+                            <AnimatePresence>
+                              {hasAnswered && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                  animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+                                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className={`p-5 border rounded-xl space-y-3 transition-colors duration-300 shadow-inner
+                                     ${butuhCerita
+                                      ? 'bg-red-50/80 dark:bg-red-900/10 border-red-200 dark:border-red-900/50'
+                                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50'
+                                    }
+                                   `}>
+                                    <label className={`block text-sm font-semibold 
+                                      ${butuhCerita ? 'text-red-800 dark:text-red-300' : 'text-slate-700 dark:text-slate-300'}
+                                    `}>
+                                      {butuhCerita
+                                        ? "Mohon ceritakan kendala yang Bapak/Ibu alami (Wajib terisi)"
+                                        : "Ada alasan atau pesan khusus terkait penilaian ini? (Opsional)"}
+                                    </label>
+                                    <textarea
+                                      required={butuhCerita}
+                                      value={jawaban[pert.id]?.cerita_kendala || ""}
+                                      onChange={(e) => handleJawabanCerita(pert.id, e.target.value)}
+                                      rows={2}
+                                      placeholder={butuhCerita
+                                        ? "Apa yang membuat layanan terasa kurang maksimal? Umpan balik Anda sangat berharga."
+                                        : "Ketik di sini jika ada tambahan catatan/apresiasi..."
                                       }
-                                    `}
-                                  />
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      )
-                    })
+                                      className={`w-full px-4 py-3 rounded-lg border bg-white dark:bg-slate-900 focus:ring-2 outline-none transition-all text-sm shadow-sm
+                                        ${butuhCerita
+                                          ? 'border-red-300 dark:border-red-800/50 text-slate-800 dark:text-slate-200 focus:ring-red-500 placeholder:text-red-300 dark:placeholder:text-red-900/50'
+                                          : 'border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 focus:ring-blue-500 placeholder:text-slate-400'
+                                        }
+                                      `}
+                                    />
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        );
+                      })() : (
+                        <motion.div
+                          key="makro-summary"
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -50 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          className="bg-slate-50 dark:bg-slate-800/30 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                             <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center">
+                                <CheckCircle2 size={24} />
+                             </div>
+                             <h3 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white">Penilaian Keseluruhan</h3>
+                          </div>
+                          
+                          <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 mt-2 pl-13">Berdasarkan seluruh pengalaman Anda dengan kinerja Pemkab Hulu Sungai Tengah secara umum.</p>
+
+                          <div className="mb-8 p-6 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <label className="block text-sm md:text-base font-semibold text-slate-800 dark:text-slate-200 mb-4 text-center">
+                              Berapa Rating Kepuasan Keseluruhan Anda? <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex flex-wrap justify-center gap-3">
+                              {[1, 2, 3, 4, 5].map(score => (
+                                <button
+                                  key={`makro-${score}`}
+                                  onClick={() => setSkorMakro(score)}
+                                  className={`relative w-14 h-14 md:w-16 md:h-16 rounded-2xl text-xl md:text-2xl font-bold flex flex-col items-center justify-center transition-all duration-300 overflow-hidden ${skorMakro === score
+                                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40 -translate-y-2 ring-2 ring-blue-600/30 ring-offset-2 dark:ring-offset-slate-900 border-none'
+                                      : 'bg-white dark:bg-slate-800 text-slate-500 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:-translate-y-1'
+                                    }`}
+                                >
+                                  {skorMakro === score && (
+                                     <span className="absolute inset-0 bg-linear-to-tr from-white/0 to-white/20"></span>
+                                  )}
+                                  {score}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mt-2">
+                            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                              Saran, Aspirasi, atau Keluhan Tambahan (Opsional)
+                            </label>
+                            <textarea
+                              value={saranAspirasi}
+                              onChange={(e) => setSaranAspirasi(e.target.value)}
+                              rows={4}
+                              placeholder="Sampaikan aspirasi Anda untuk memajukan pembangunan dan pelayanan pemerintah daerah..."
+                              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   ) : (
                     <div className="text-center p-8 text-slate-500">
                       Belum ada master pertanyaan yang aktif di database.
                     </div>
                   )}
-
-                  <hr className="border-slate-200 dark:border-slate-800" />
-
-                  {/* Skor Makro & Saran */}
-                  <div className="bg-slate-50 dark:bg-slate-800/30 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mt-8">
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Penilaian Secara Keseluruhan (Makro)</h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">Penilaian komprehensif Anda atas kinerja Pemkab secara umum.</p>
-
-                    <div className="mb-8">
-                      <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">
-                        Berikan Rating Kepuasan Keseluruhan Anda <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex flex-wrap gap-3">
-                        {[1, 2, 3, 4, 5].map(score => (
-                          <button
-                            key={`makro-${score}`}
-                            onClick={() => setSkorMakro(score)}
-                            className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl text-xl font-bold flex items-center justify-center transition-all ${skorMakro === score
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110 ring-4 ring-blue-600/20'
-                                : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'
-                              }`}
-                          >
-                            {score}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                        Saran, Aspirasi, atau Keluhan Tambahan (Opsional)
-                      </label>
-                      <textarea
-                        value={saranAspirasi}
-                        onChange={(e) => setSaranAspirasi(e.target.value)}
-                        rows={3}
-                        placeholder="Sampaikan aspirasi Anda untuk memajukan pembangunan dan pelayanan pemerintah daerah..."
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
                 </div>
 
-                <div className="mt-8 flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-6 bg-white dark:bg-slate-900 sticky bottom-0 z-10">
+                <div className="mt-6 flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-6 bg-white dark:bg-slate-900">
                   <button
-                    onClick={() => setCurrentStep("demografi")}
+                    onClick={handlePrevQuestion}
                     className="flex items-center gap-2 px-6 py-3 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   >
                     <ChevronLeft size={18} />
                     Kembali
                   </button>
+
                   <button
-                    onClick={submitSurvei}
-                    disabled={!isKuesionerValid() || isLoading}
-                    className="flex items-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:dark:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-semibold transition-all shadow-md active:scale-95"
+                    onClick={currentQuestionIndex < listPertanyaan.length ? handleNextQuestion : submitSurvei}
+                    disabled={!isCurrentQuestionValid() || isLoading}
+                    className="flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:dark:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-semibold transition-all shadow-md shadow-blue-500/20 active:scale-95 group"
                   >
-                    {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Kirimkan Survei"}
-                    {!isLoading && <Send size={18} />}
+                    {isLoading ? (
+                       <Loader2 className="animate-spin w-5 h-5" />
+                    ) : (
+                       <span>{currentQuestionIndex < listPertanyaan.length ? "Selanjutnya" : "Kirimkan Survei"}</span>
+                    )}
+                    
+                    {!isLoading && currentQuestionIndex < listPertanyaan.length && <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />}
+                    {!isLoading && currentQuestionIndex === listPertanyaan.length && <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />}
                   </button>
                 </div>
               </motion.div>
