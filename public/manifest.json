@@ -1,0 +1,18 @@
+{
+  "name": "Survei Persepsi Publik Kabupaten HST",
+  "short_name": "SurveyHST",
+  "description": "Aplikasi Survei Indeks Kepuasan Masyarakat Pemerintah Kabupaten Hulu Sungai Tengah",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 384x384 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#2563eb",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/survei"
+}

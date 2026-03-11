@@ -11,6 +11,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Survei Persepsi Publik Kabupaten HST",
   description: "Platform resmi survei persepsi dan kepuasan masyarakat terhadap kinerja Pemerintah Kabupaten Hulu Sungai Tengah.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SurveyHST",
+  },
 };
 
 export const viewport: Viewport = {
